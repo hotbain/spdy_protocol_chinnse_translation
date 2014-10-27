@@ -286,13 +286,19 @@ A stream is created by sending a control frame with the type set to SYN_STREAM (
 #####把控制帧的type设置为SYN_STREAM([2.6.1](http://www/baidu.com))就可以创建一个流。如果是服务器初始化的数据流那么，streamID必须是偶数。如果是客户端初始化的流，那么StreamId必须是奇数。0不是一个合法的StreamId。当流创建出来的侍候，连接的每一端的StreamId必须是单调递增的。
 The stream-id MUST increase with each new stream. If an endpoint receives a SYN_STREAM with a stream id which is less than any previously received SYN_STREAM, it MUST issue a session error (Section 2.4.1) with the status PROTOCOL_ERROR.
 
-#####每一个新的流的StreamId**必须**是递增的
+#####每一个新的流的StreamId*必须*是递增的.如果一端收到的SYN_STREAM控制帧的StreamId比以前接收到的SYN_STREAM控制帧的id要小的话，那么该端点就应该发送一个PROTOCOL_ERROR状态的恢复错误(小节 [2.4.1](http://www.baidu.com))
 
 It is a protocol error to send two SYN_STREAMs with the same stream-id. If a recipient receives a second SYN_STREAM for the same stream, it MUST issue a stream error (Section 2.4.2) with the status code PROTOCOL_ERROR.
+#####发送的两个SYN_STREAM控制帧的streamId相同，那将会是个协议错误。如果接收方收到了相同stream的第二个SYN_STREAM控制帧，那么接收方必须发出一个错误码为PROTOCOL_ERROR流错误(小节 [2.4.2](http://www.baidu.com))
+
 
 Upon receipt of a SYN_STREAM, the recipient can reject the stream by sending a stream error (Section 2.4.2) with the error code REFUSED_STREAM. Note, however, that the creating endpoint may have already sent additional frames for that stream which cannot be immediately stopped.
 
+一旦收到SYN_STREAM控制帧，那么接收方可以发送错误码为REFUSED_STREAM的流错误(小节 [2.4.2](http:://baidu.com))
+
 Once the stream is created, the creator may immediately send HEADERS or DATA frames for that stream, without needing to wait for the recipient to acknowledge.
+#####一旦流被创建出来，那么创建这可以立即往那个流中发送头或者数据帧，无需等待接收方响应。
+
 2.3.2.1 Unidirectional streams
 
 When an endpoint creates a stream that includes an Associated-To-Stream-ID, it creates a unidirectional stream which the creating endpoint can use to send frames, but the receiving endpoint cannot. The receiving endpoint is implicitly already in the half-closed (Section 2.3.6) state.
@@ -304,15 +310,24 @@ SYN_STREAM frames which do not include an Associated-To-Stream-ID are bidirectio
 The creator of a stream assigns a priority for that stream. Priority is represented as an integer from 0 to 7. 0 represents the highest priority and 7 represents the lowest priority.
 
 The sender and recipient SHOULD use best-effort to process streams in the order of highest priority to lowest priority.
-2.3.4 Stream headers
 
+2.3.4 Stream headers
+####2.3.4 流头
 Streams carry optional sets of name/value pair headers which carry metadata about the stream. After the stream has been created, and as long as the sender is not closed (Section 2.3.7) or half-closed (Section 2.3.6), each side may send HEADERS frame(s) containing the header data. Header data can be sent in multiple HEADERS frames, and HEADERS frames may be interleaved with data frames.
+
+#####流可以携带可选数量的关于当前流元数据的的键值对头部。流创建完成后，并且只要发送方没有关闭(小节 [2.3.7](http://www.baidu.com))或者半关闭(小节[2.3.6](http://www.baidu.com)).每一端的都可以发送头数据头部帧。头数据可以通过多个头帧来发送，并且头帧都是可以和数据帧并行发送。
+
 2.3.5 Stream data exchange
+#### 2.3.5 流数据交换
 
 Once a stream is created, it can be used to send arbitrary amounts of data. Generally this means that a series of data frames will be sent on the stream until a frame containing the FLAG_FIN flag is set. The FLAG_FIN can be set on a SYN_STREAM (Section 2.6.1), SYN_REPLY (Section 2.6.2), HEADERS (Section 2.6.7) or a DATA (Section 2.2.2) frame. Once the FLAG_FIN has been sent, the stream is considered to be half-closed.
 2.3.6 Stream half-close
 
+#####一旦流被创建出来，就可以用来发送任意数量的数据。通常意义上说，这也就意味着一系列的数据帧可以被发送直到FLAG_FIN标志位被设置。FLAG_FIN状态为可以在SYN_STREAM(小节 [2.6.1](http://www.baidu.com))、SYN_REPLY(小节[2.6.2](http://www.baidu.com))、HEADERS(小节[2.6.7](http://www.baidu.com))或者DATA(小节[2.2.2](http://www.baidu.com))上进行设置。
+
+
 When one side of the stream sends a frame with the FLAG_FIN flag set, the stream is half-closed from that endpoint. The sender of the FLAG_FIN MUST NOT send further frames on that stream. When both sides have half-closed, the stream is closed.
+一旦流的一端发送的帧FLAG_FIN标志位。被设置，那么来自那一端的流就是半关闭了。FLAG_FIN帧的发送发就 务必不能往那个流上发送数据了。当双方都是半关闭时，那么流就是关闭状态了。
 
 If an endpoint receives a data frame after the stream is half-closed from the sender (e.g. the endpoint has already received a prior frame for the stream with the FIN flag set), it MUST send a RST_STREAM to the sender with the status STREAM_ALREADY_CLOSED.
 2.3.7 Stream close
