@@ -233,22 +233,38 @@ Flags: Flags related to this frame. Valid flags are:
 
 Length: An unsigned 24-bit value representing the number of bytes after the length field. The total size of a data frame is 8 bytes + length. It is valid to have a zero-length data frame.
 
+#####长度： 一个表明长度字段后，字节长度的24位无符号字节素质。数据帧的总长度为8字节+长度
 Data: The variable-length data payload; the length was defined in the length field.
-
+#####数据：长度可变的数据区域。长度通过长度字段进行定义。 
 Data frame processing requirements:
+>If an endpoint receives a data frame for a stream-id which is not open and the endpoint has not sent a GOAWAY (Section 2.6.6) frame, it MUST issue a stream error (Section 2.4.2) with the error code INVALID_STREAM for the stream-id.
+>If the endpoint which created the stream receives a data frame before receiving a SYN_REPLY on that stream, it is a protocol error, and the recipient MUST issue a stream error (Section 2.4.2) with the status code PROTOCOL_ERROR for the stream-id.
+>Implementors note: If an endpoint receives multiple data frames for invalid stream-ids, it MAY close the session.
 
-    If an endpoint receives a data frame for a stream-id which is not open and the endpoint has not sent a GOAWAY (Section 2.6.6) frame, it MUST issue a stream error (Section 2.4.2) with the error code INVALID_STREAM for the stream-id.
-    If the endpoint which created the stream receives a data frame before receiving a SYN_REPLY on that stream, it is a protocol error, and the recipient MUST issue a stream error (Section 2.4.2) with the status code PROTOCOL_ERROR for the stream-id.
-    Implementors note: If an endpoint receives multiple data frames for invalid stream-ids, it MAY close the session.
+#####数据帧处理需求：
+>#####如果端点接收到了
+>#####实现注意：如果一个端点接收到一个非法streamId的多个数据帧，那么接收端*可以*关闭会话。
+
 
 2.3 Streams
 
 Streams are independent sequences of bi-directional data divided into frames with several properties:
+>Streams may be created by either the client or server.
 
-    Streams may be created by either the client or server.
-    Streams optionally carry a set of name/value header pairs.
-    Streams can concurrently send data interleaved with other streams.
-    Streams may be cancelled.
+>Streams optionally carry a set of name/value header pairs.
+
+>Streams can concurrently send data interleaved with other streams.
+
+>Streams may be cancelled.
+
+流就是会被分割到多个帧中的并且会携带多个如下属性的双向独立的字节流：
+>流可以被客户端或者服务器创建
+
+>流可以携带多个键值对头部
+
+>流可以并发的与其他流发送数据
+
+>流可以被取消。
 
 2.3.1 Stream frames
 
@@ -257,12 +273,20 @@ SPDY defines 3 control frames to manage the lifecycle of a stream:
     SYN_STREAM - Open a new stream
     SYN_REPLY - Remote acknowledgement of a new, open stream
     RST_STREAM - Close a stream
+###2.3.1 流帧
+#####SPDY定义了3个控制帧来管理流的生命周期：
+	SYN_STREAM-打开新的流
+	SYN_REPLY--新打开流的远程确认
+	RST_STREAM-关闭流
 
 2.3.2 Stream creation
+####2.3.2 流创建
+A stream is created by sending a control frame with the type set to SYN_STREAM (Section 2.6.1). If the server is initiating the stream, the Stream-ID must be even. If the client is initiating the stream, the Stream-ID must be odd. 0 is not a valid Stream-ID. Stream-IDs from each side of the connection must increase monotonically as new streams are created. E.g. Stream 2 may be created after stream 3, but stream 7 must not be created after stream 9. Stream IDs do not wrap: when a client or server cannot create a new stream id without exceeding a 31 bit value, it MUST NOT create a new stream.'
 
-A stream is created by sending a control frame with the type set to SYN_STREAM (Section 2.6.1). If the server is initiating the stream, the Stream-ID must be even. If the client is initiating the stream, the Stream-ID must be odd. 0 is not a valid Stream-ID. Stream-IDs from each side of the connection must increase monotonically as new streams are created. E.g. Stream 2 may be created after stream 3, but stream 7 must not be created after stream 9. Stream IDs do not wrap: when a client or server cannot create a new stream id without exceeding a 31 bit value, it MUST NOT create a new stream.
-
+#####把控制帧的type设置为SYN_STREAM([2.6.1](http://www/baidu.com))就可以创建一个流。如果是服务器初始化的数据流那么，streamID必须是偶数。如果是客户端初始化的流，那么StreamId必须是奇数。0不是一个合法的StreamId。当流创建出来的侍候，连接的每一端的StreamId必须是单调递增的。
 The stream-id MUST increase with each new stream. If an endpoint receives a SYN_STREAM with a stream id which is less than any previously received SYN_STREAM, it MUST issue a session error (Section 2.4.1) with the status PROTOCOL_ERROR.
+
+#####每一个新的流的StreamId**必须**是递增的
 
 It is a protocol error to send two SYN_STREAMs with the same stream-id. If a recipient receives a second SYN_STREAM for the same stream, it MUST issue a stream error (Section 2.4.2) with the status code PROTOCOL_ERROR.
 
