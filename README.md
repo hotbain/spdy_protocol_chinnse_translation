@@ -10,6 +10,9 @@ Abstract
 This document describes SPDY, a protocol designed for low-latency transport of content over the World Wide Web. SPDY introduces two layers of protocol. The lower layer is a general purpose framing layer which can be used atop a reliable transport (likely TCP) for multiplexed, prioritized, and compressed data communication of many concurrent streams. The upper layer of the protocol provides HTTP-like semantics for compatibility with existing HTTP application servers.
 Status of this Memo
 
+本文档描述了spdy协议，该是出于万维网中的低延时问题而设计的。SPDY引入了两层协议。
+
+
 This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.
 
 Internet-Drafts are working documents of the Internet Engineering Task Force (IETF). Note that other groups may also distribute working documents as Internet-Drafts. The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.
