@@ -8,19 +8,27 @@ draft-mbelshe-httpbis-spdy-00
 Abstract
 
 This document describes SPDY, a protocol designed for low-latency transport of content over the World Wide Web. SPDY introduces two layers of protocol. The lower layer is a general purpose framing layer which can be used atop a reliable transport (likely TCP) for multiplexed, prioritized, and compressed data communication of many concurrent streams. The upper layer of the protocol provides HTTP-like semantics for compatibility with existing HTTP application servers.
-Status of this Memo
-
-本文档描述了spdy协议，该是出于万维网中的低延时问题而设计的。SPDY引入了两层协议。
 
 
-This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.
+本文档描述了spdy协议，该是出于万维网中的低延时问题而设计的。SPDY引入了两层协议。较低i层次是一个帧协议层，该协议层可以在一个可靠的传输传输(例如像TCP协议)，用来双向的、优先权协议的并且能够在多个并发流的时候能够压缩数据通信。上层协议就是提供一个和HTTP协议类似的，能够与现已存在的HTTP应用服务器兼容的协议。
 
-Internet-Drafts are working documents of the Internet Engineering Task Force (IETF). Note that other groups may also distribute working documents as Internet-Drafts. The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.
+Status of this Memo  
 
-Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time. It is inappropriate to use Internet-Drafts as reference material or to cite them other than as “work in progress”.
+备忘录状态
 
-This Internet-Draft will expire in August 2012.
+
+    This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.
+
+    Internet-Drafts are working documents of the Internet Engineering Task Force (IETF). Note that other groups may also distribute working documents as Internet-Drafts. The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.
+
+    Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time. It is inappropriate to use Internet-Drafts as reference material or to cite them other than as “work in progress”.
+
+    This Internet-Draft will expire in August 2012.
+
 Copyright Notice
+
+版权问题
+
 
 Copyright © 2012 IETF Trust and the persons identified as the document authors. All rights reserved.
 
@@ -97,11 +105,14 @@ Table of Contents
     Authors' Addresses
     A.   Changes
 
-1. Overview
+1. Overview （概览）
 
 One of the bottlenecks of HTTP implementations is that HTTP relies on multiple connections for concurrency. This causes several problems, including additional round trips for connection setup, slow-start delays, and connection rationing by the client, where it tries to avoid opening too many connections to any single server. HTTP pipelining helps some, but only achieves partial multiplexing. In addition, pipelining has proven non-deployable in existing browsers due to intermediary interference.
 
+HTTP实现总的一个瓶颈就是HTTP在并发的情况下依赖了多个连接。这会引起几个问题，包括连接创建时额外的回环、慢开始延时。HTTP解决了很多问题。但是仅仅完成了半双工。除此之外。
+
 SPDY adds a framing layer for multiplexing multiple, concurrent streams across a single TCP connection (or any reliable transport stream). The framing layer is optimized for HTTP-like request-response streams, such that applications which run over HTTP today can work over SPDY with little or no change on behalf of the web application writer.
+
 
 The SPDY session offers four improvements over HTTP:
 
@@ -126,21 +137,39 @@ The SPDY Specification is split into two parts: a framing layer (Section 2), whi
     stream: A bi-directional flow of bytes across a virtual channel within a SPDY session.
     stream error: An error on an individual SPDY stream.
 
-2. SPDY Framing Layer
+2. SPDY Framing Layer 
+
+    SPDY帧协议层
+
 2.1 Session (Connections)
+    回话(连接)
 
 The SPDY framing layer (or "session") runs atop a reliable transport layer such as TCP. The client is the TCP connection initiator. SPDY connections are persistent connections.
 
+SPDY帧层(或者说会话)需要在一个可靠的传输层协议之上才能运行。客户端是TCP连接的初始化器。SPDY连接是持久连接。
+
 For best performance, it is expected that clients will not close open connections until the user navigates away from all web pages referencing a connection, or until the server closes the connection. Servers are encouraged to leave connections open for as long as possible, but can terminate idle connections if necessary. When either endpoint closes the transport-level connection, it MUST first send a GOAWAY (Section 2.6.6) frame so that the endpoints can reliably determine if requests finished before the close.
-2.2 Framing
+
+为了达到最好的性能，最好是客户端不要关闭已经打开的连接，直到用户关闭共用同一个连接多个web页面或者服务器主动关闭连接。鼓励服务器端尽可能延长连接的存活时间，但是在考虑到自身需要的前提下也是可以关闭空闲连接的。当任何一端关闭传输层连接时，必须首先发送一个GOAWAY帧到另一端，这样其他端点判断在关闭之前，当前的请求是否已经完成。
+
+2.2 Framing     
+    帧
+
 
 Once the connection is established, clients and servers exchange framed messages. There are two types of frames: control frames (Section 2.2.1) and data frames (Section 2.2.2). Frames always have a common header which is 8 bytes in length.
 
-The first bit is a control bit indicating whether a frame is a control frame or data frame. Control frames carry a version number, a frame type, flags, and a length. Data frames contain the stream ID, flags, and the length for the payload carried after the common header. The simple header is designed to make reading and writing of frames easy.
+一旦连接已经建立，那么客户端和服务器就可以交换帧消息了。一共有两种类型的帧：控制帧(见2.2.1)和数据帧(见2.2.2)。每一种帧中总是含有8个字节长度的通用头信息。
+
+The first bit is a control bit indicating whether a frame is a control frame or data frame. Control frames carry a version number, a frame type, flags, and a length. Data frames contain the stream ID, flags, and the length for the payload carried after the common header. The simple header is designed to make reading and writing of frames easy
+
+第一个bit位是一个控制位，用来表明当前帧是控制帧还是数据帧。控制帧携带有一个版本号、帧类型、标志位、和长度。而数据帧含有流ID、标志位、通用头、payload的长度.这些简单的头信息用来让帧的读取和写入更加的简单。
 
 All integer values, including length, version, and type, are in network byte order. SPDY does not enforce alignment of types in dynamically sized frames.
-2.2.1 Control frames
 
+
+
+2.2.1 Control frames
+      控制帧
 
 +----------------------------------+
 |C| Version(15bits) | Type(16bits) |
