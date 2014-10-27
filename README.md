@@ -12,7 +12,7 @@ This document describes SPDY, a protocol designed for low-latency transport of c
 
 本文档描述了spdy协议，该是出于万维网中的低延时问题而设计的。SPDY引入了两层协议。较低i层次是一个帧协议层，该协议层可以在一个可靠的传输传输(例如像TCP协议)，用来双向的、优先权协议的并且能够在多个并发流的时候能够压缩数据通信。上层协议就是提供一个和HTTP协议类似的，能够与现已存在的HTTP应用服务器兼容的协议。
 
-Status of this Memo  
+#Status of this Memo  
 
 备忘录状态
 
@@ -136,6 +136,16 @@ The SPDY Specification is split into two parts: a framing layer (Section 2), whi
     session error: An error on the SPDY session.
     stream: A bi-directional flow of bytes across a virtual channel within a SPDY session.
     stream error: An error on an individual SPDY stream.
+	客户端：初始化SPDY回话的端点
+	连接： 在两个端点之间的传输层连接
+	端点： 或者是服务器或者是客户端
+	帧： 通过SPDY回话传输的带有头前缀的字节序列
+	服务器： 不会主动初始化SPDY回话的端点
+	会话： 连接的同义词
+	回话错误： SPDY回话错误
+	流： 在SPDY回话的虚拟通道中可双向传输的自己流
+	流错误： 单个SPDY流中的错误
+	
 
 2. SPDY Framing Layer 
 
@@ -144,13 +154,13 @@ The SPDY Specification is split into two parts: a framing layer (Section 2), whi
 2.1 Session (Connections)
     回话(连接)
 
-The SPDY framing layer (or "session") runs atop a reliable transport layer such as TCP. The client is the TCP connection initiator. SPDY connections are persistent connections.
+####The SPDY framing layer (or "session") runs atop a reliable transport layer such as TCP. The client is the TCP connection initiator. SPDY connections are persistent connections.
 
-SPDY帧层(或者说会话)需要在一个可靠的传输层协议之上才能运行。客户端是TCP连接的初始化器。SPDY连接是持久连接。
+#######SPDY帧层(或者说会话)需要在一个可靠的传输层协议之上才能运行。客户端是TCP连接的初始化器。SPDY连接是持久连接。
 
-For best performance, it is expected that clients will not close open connections until the user navigates away from all web pages referencing a connection, or until the server closes the connection. Servers are encouraged to leave connections open for as long as possible, but can terminate idle connections if necessary. When either endpoint closes the transport-level connection, it MUST first send a GOAWAY (Section 2.6.6) frame so that the endpoints can reliably determine if requests finished before the close.
+####For best performance, it is expected that clients will not close open connections until the user navigates away from all web pages referencing a connection, or until the server closes the connection. Servers are encouraged to leave connections open for as long as possible, but can terminate idle connections if necessary. When either endpoint closes the transport-level connection, it MUST first send a GOAWAY (Section 2.6.6) frame so that the endpoints can reliably determine if requests finished before the close.
 
-为了达到最好的性能，最好是客户端不要关闭已经打开的连接，直到用户关闭共用同一个连接多个web页面或者服务器主动关闭连接。鼓励服务器端尽可能延长连接的存活时间，但是在考虑到自身需要的前提下也是可以关闭空闲连接的。当任何一端关闭传输层连接时，必须首先发送一个GOAWAY帧到另一端，这样其他端点判断在关闭之前，当前的请求是否已经完成。
+######为了达到最好的性能，最好是客户端不要关闭已经打开的连接，直到用户关闭共用同一个连接多个web页面或者服务器主动关闭连接。鼓励服务器端尽可能延长连接的存活时间，但是在考虑到自身需要的前提下也是可以关闭空闲连接的。当任何一端关闭传输层连接时，必须首先发送一个GOAWAY帧到另一端，这样其他端点判断在关闭之前，当前的请求是否已经完成。
 
 2.2 Framing     
     帧
@@ -182,22 +192,25 @@ All integer values, including length, version, and type, are in network byte ord
 
 Control bit: The 'C' bit is a single bit indicating if this is a control message. For control frames this value is always 1.
 
+#####C比特是用来表明当前帧是否为控制帧。对于控制帧来说值为1
 Version: The version number of the SPDY protocol. This document describes SPDY version 3.
-
+#####版本号： SPDY协议的版本号。当前文档描述的是协议3
 Type: The type of control frame. See Control Frames (Section 2.6) for the complete list of control frames.
-
+#####类型： 控制帧的类型。请查看控制帧的完整列表(小节 [2.6]("http://www.baidu.com"))
 Flags: Flags related to this frame. Flags for control frames and data frames are different.
-
+#####标志位： 用来表明控制帧和数据帧是不同的。
 Length: An unsigned 24-bit value representing the number of bytes after the length field.
-
+#####长度： 一个无符号的24字节值，用来表明length字段后字节的个数
 Data: data associated with this control frame. The format and length of this data is controlled by the control frame type.
-
+#####数据：与当前控制帧有关的数据。数据的格式和长度通过控制帧的类型进行控制。
 Control frame processing requirements:
+>Note that full length control frames (16MB) can be large for implementations running on resource-limited hardware. In such cases, implementations MAY limit the maximum length frame supported. However, all implementations MUST be able to receive control frames of at least 8192 octets in length.
 
-    Note that full length control frames (16MB) can be large for implementations running on resource-limited hardware. In such cases, implementations MAY limit the maximum length frame supported. However, all implementations MUST be able to receive control frames of at least 8192 octets in length.
+#####控制帧处理需求：
+>#####记住：控制帧的最大长度对于资源有限的设备实现来说会显的比较大。在这种情况下，实现可以限制控制帧的最大长度。然而，所有的实现必须至少可以接收8192字节长度的控制帧。
 
 2.2.2 Data frames
-
+#2.2.2 数据帧
 
 +----------------------------------+
 |C|       Stream-ID (31bits)       |
@@ -209,12 +222,14 @@ Control frame processing requirements:
   
 
 Control bit: For data frames this value is always 0.
-
+#####控制位： 对于数据帧来说该值总为0
 Stream-ID: A 31-bit value identifying the stream.
-
+#####流ID： 用来识别当前流的32位值
 Flags: Flags related to this frame. Valid flags are:
+>0x01 = FLAG_FIN - signifies that this frame represents the last frame to be transmitted on this stream. See Stream Close (Section 2.3.7) below。
 
-    0x01 = FLAG_FIN - signifies that this frame represents the last frame to be transmitted on this stream. See Stream Close (Section 2.3.7) below.
+标志位： 与该帧有关的标志位。合法的标志位是：
+>0x01=FLAG_FIN---用来表明当前帧是发送到当前流的最后一帧。请查看下面的[Stream Close](http://www.baidu.com)
 
 Length: An unsigned 24-bit value representing the number of bytes after the length field. The total size of a data frame is 8 bytes + length. It is valid to have a zero-length data frame.
 
