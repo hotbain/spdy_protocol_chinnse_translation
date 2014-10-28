@@ -123,8 +123,9 @@ The SPDY session offers four improvements over HTTP:
 
 SPDY attempts to preserve the existing semantics of HTTP. All features such as cookies, ETags, Vary headers, Content-Encoding negotiations, etc work as they do with HTTP; SPDY only replaces the way the data is written to the network.
 1.1 Document Organization
-
+####文档组织
 The SPDY Specification is split into two parts: a framing layer (Section 2), which multiplexes a TCP connection into independent, length-prefixed frames, and an HTTP layer (Section 3), which specifies the mechanism for overlaying HTTP request/response pairs on top of the framing layer. While some of the framing layer concepts are isolated from the HTTP layer, building a generic framing layer has not been a goal. The framing layer is tailored to the needs of the HTTP protocol and server push.
+####该SPDY规范分成两部分：帧层(小节[2](http://www.baidu.com))
 1.2 Definitions
 
     client: The endpoint initiating the SPDY session.
@@ -327,18 +328,26 @@ Once a stream is created, it can be used to send arbitrary amounts of data. Gene
 
 
 When one side of the stream sends a frame with the FLAG_FIN flag set, the stream is half-closed from that endpoint. The sender of the FLAG_FIN MUST NOT send further frames on that stream. When both sides have half-closed, the stream is closed.
-一旦流的一端发送的帧FLAG_FIN标志位。被设置，那么来自那一端的流就是半关闭了。FLAG_FIN帧的发送发就 务必不能往那个流上发送数据了。当双方都是半关闭时，那么流就是关闭状态了。
+#####一旦流的一端发送的帧FLAG_FIN标志位。被设置，那么来自那一端的流就是半关闭了。FLAG_FIN帧的发送发就 务必不能往那个流上发送数据了。当双方都是半关闭时，那么流就是关闭状态了。
 
 If an endpoint receives a data frame after the stream is half-closed from the sender (e.g. the endpoint has already received a prior frame for the stream with the FIN flag set), it MUST send a RST_STREAM to the sender with the status STREAM_ALREADY_CLOSED.
+#####如果一端终端接到了来自发送端的半关闭就应该的流，那么就应该发送一个状态位为STREAM_ALREADY_CLOSED的RST_STREAM发送到发送端
 2.3.7 Stream close
-
+#### 2.3.7 流关闭
 There are 3 ways that streams can be terminated:
 
     Normal termination: Normal stream termination occurs when both sender and recipient have half-closed the stream by sending a FLAG_FIN.
     Abrupt termination: Either the client or server can send a RST_STREAM control frame at any time. A RST_STREAM contains an error code to indicate the reason for failure. When a RST_STREAM is sent from the stream originator, it indicates a failure to complete the stream and that no further data will be sent on the stream. When a RST_STREAM is sent from the stream recipient, the sender, upon receipt, should stop sending any data on the stream. The stream recipient should be aware that there is a race between data already in transit from the sender and the time the RST_STREAM is received. See Stream Error Handling (Section 2.4.2)
     TCP connection teardown: If the TCP connection is torn down while un-closed streams exist, then the endpoint must assume that the stream was abnormally interrupted and may be incomplete.
 
+#####可以通过三种方式关闭流：
+>正常终止：当发送端和接收端都发送一个FLAG_FIN控制帧就可以完成。
+
+>意外终止：在任何时候，接收端和发送端都可以发送RST_STREAM控制帧。RST_STREAM控制帧会携带错误码，以此来表明失败的原因。如果RST_STREAM帧是流的发起方发送过来的，这么这就表明已经完成了当前流的发送，并且不会往该流上发送数据了。如果RST_STREAM控制帧来自于流的接收方，那么发送方而不是接收方应该立即停止向流中发送数据。
+
+
 If an endpoint receives a data frame after the stream is closed, it must send a RST_STREAM to the sender with the status PROTOCOL_ERROR.
+#####如果一端在流关闭之后，接收到了数据帧，那么必须发送一个状态位为PROTOCOL_ERROR的RST_STREAM到发送端。
 2.4 Error Handling
 
 The SPDY framing layer has only two types of errors, and they are always handled consistently. Any reference in this specification to "issue a session error" refers to Section 2.4.1. Any reference to "issue a stream error" refers to Section 2.4.2.
